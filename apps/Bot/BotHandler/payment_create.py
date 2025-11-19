@@ -21,7 +21,8 @@ cancel_button = InlineKeyboardMarkup([[InlineKeyboardButton(text="Bekor qilish",
 async def topup_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "💰 Hisobni to‘ldirmoqchi bo‘lgan summani kiriting.\n"
-        "Minimal: 10 000 so‘m",
+        "Minimal: 10000 so‘m\n"
+        "<i>faqat raqam kiriting hech qanday bo'sh joylarsiz</i>",
         reply_markup=cancel_button
     )
     return ENTER_AMOUNT
