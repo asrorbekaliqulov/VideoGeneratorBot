@@ -32,7 +32,7 @@ keybord = [
     ],
 ]
 
-reply_markup = ReplyKeyboardMarkup(keybord, one_time_keyboard=True, resize_keyboard=True, input_field_placeholder="👇Quyidagi tugmalardan foydalaning👇")
+reply_markup = ReplyKeyboardMarkup(keybord, one_time_keyboard=True, resize_keyboard=False, input_field_placeholder="👇Quyidagi tugmalardan foydalaning👇")
 
 @sync_to_async
 def GetChannelByID(chat_id):

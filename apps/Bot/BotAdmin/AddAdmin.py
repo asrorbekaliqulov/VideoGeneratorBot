@@ -31,7 +31,7 @@ async def start_add_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                     ))
             ]
         ],
-        resize_keyboard=True,
+        resize_keyboard=False,
         one_time_keyboard=True)
     )
     return ASK_USER_ID
