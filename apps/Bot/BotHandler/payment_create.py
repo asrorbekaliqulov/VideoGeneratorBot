@@ -23,7 +23,8 @@ async def topup_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💰 Hisobni to‘ldirmoqchi bo‘lgan summani kiriting.\n"
         "Minimal: 10000 so‘m\n"
         "<i>faqat raqam kiriting hech qanday bo'sh joylarsiz</i>",
-        reply_markup=cancel_button
+        reply_markup=cancel_button,
+        parse_mode="HTML"
     )
     return ENTER_AMOUNT
 
