@@ -45,7 +45,8 @@ async def enter_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"<b>💳 To‘lov summasi: {amount} so‘m\n\n"
         "Quyidagi karta raqamiga to‘lovni amalga oshiring:\n\n"
-        "<code>8600 1234 5678 9012</code>\n\n"
+        "<code>9860 0801 4716 9256 </code>\n"
+        "Chexroz Urazboyeva\n\n"
         "📸 So‘ngra <i>faqat rasm formatida</i> to‘lov screenshotini yuboring..\n"
         "<i>❗ Screenshotda vaqt aniq ko‘rinishi shart!</i></b>",
         parse_mode="HTML",
