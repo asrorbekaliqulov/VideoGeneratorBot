@@ -5,10 +5,11 @@ from asgiref.sync import sync_to_async
 
 async def payment_callback(update, context):
     query = update.callback_query
-    await query.answer()
     data = query.data
 
     if data.startswith("pay_ok_"):
+        await query.answer("Tasdiqlanmoqda")
+
         payment_id = int(data.replace("pay_ok_", ""))
 
         # Payment va userni olish (select_related bilan query optimallashtirish)
@@ -48,6 +49,8 @@ async def payment_callback(update, context):
         )
 
     elif data.startswith("pay_no_"):
+        await query.answer("Bekor qilinmoqda")
+
         payment_id = int(data.replace("pay_no_", ""))
 
         payment = await sync_to_async(Payment.objects.select_related("user").get)(id=payment_id)
