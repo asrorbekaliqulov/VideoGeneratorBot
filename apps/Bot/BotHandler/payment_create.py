@@ -1,34 +1,53 @@
+from mimetypes import read_mime_types
+
 from asgiref.sync import sync_to_async
 from telegram import (
-    Update, InlineKeyboardMarkup, InlineKeyboardButton,
-    ReplyKeyboardMarkup, ReplyKeyboardRemove
+    Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 )
 from telegram.ext import (
-    ContextTypes, ConversationHandler, MessageHandler,
-    filters, CallbackContext
+    ContextTypes, ConversationHandler, MessageHandler, CommandHandler,
+    filters, CallbackQueryHandler
 )
+from ..BotCommands.StartCommand import get_user_keyboard
 from apps.Bot.models.TelegramBot import TelegramUser, Payment
 import os
+
+from ..MandatoryChannel.Add_channel import reply_markup
 
 ENTER_AMOUNT, UPLOAD_SCREENSHOT = range(2)
 
 payment_channel = os.getenv("PAYMENT_CHANNEL_ID")
 ADMIN_CHANNEL_ID = payment_channel
 
-cancel_keyboard = ReplyKeyboardMarkup(
-    [["⬅️ Orqaga", "❌ Bekor qilish"]],
-    resize_keyboard=True
-)
+
+# --- INLINE BUTTONS ---
+def amount_buttons():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("⬅️ Orqaga", callback_data="back_amount")],
+        [InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel")]
+    ])
+
+def screenshot_buttons():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("⬅️ Orqaga", callback_data="back_screenshot")],
+        [InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel")]
+    ])
+
 
 # ---------------------------
 # START
 # ---------------------------
 async def topup_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    rm_keyb = ReplyKeyboardRemove()
     await update.message.reply_text(
-        "💰 Hisobni to‘ldirmoqchi bo‘lgan summani kiriting.\n"
-        "Minimal: 10000 so‘m",
-        reply_markup=cancel_keyboard
+        "💰 Hisobni to‘ldirmoqchi bo‘lgan summani kiriting.\n",
+        reply_markup=rm_keyb
+    )
+    await update.message.reply_text(
+        "Minimal: 10000 so‘m\n"
+        "<i>Faqat raqam kiriting</i>",
+        parse_mode="HTML",
+        reply_markup=amount_buttons()
     )
 
     return ENTER_AMOUNT
@@ -38,39 +57,34 @@ async def topup_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ENTER AMOUNT
 # ---------------------------
 async def enter_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
+    text = update.message.text.replace(" ", "")
 
-    # ❌ Bekor qilish
-    if text == "❌ Bekor qilish":
-        return await cancel_process(update, context)
-
-    # ⬅️ Orqaga
-    if text == "⬅️ Orqaga":
-        return await topup_start(update, context)
-
-    clean_text = text.replace(" ", "")
-
-    if not clean_text.isdigit():
-        await update.message.reply_text("❌ Faqat raqam kiriting!", reply_markup=cancel_keyboard)
+    if not text.isdigit():
+        await update.message.reply_text(
+            "❌ Faqat raqam kiriting!",
+            reply_markup=amount_buttons()
+        )
         return ENTER_AMOUNT
 
-    amount = int(clean_text)
+    amount = int(text)
 
     if amount < 10000:
-        await update.message.reply_text("❌ Minimal summa 10 000 so‘m!", reply_markup=cancel_keyboard)
+        await update.message.reply_text(
+            "❌ Minimal summa 10 000 so‘m!",
+            reply_markup=amount_buttons()
+        )
         return ENTER_AMOUNT
 
     context.user_data["amount"] = amount
 
     await update.message.reply_text(
-        f"<b>💳 To‘lov summasi: {amount} so‘m\n\n"
-        "Quyidagi karta raqamiga to‘lov qiling:\n\n"
+        f"<b>💳 To‘lov summasi: {amount} so‘m</b>\n\n"
+        "To‘lovni shu kartaga qiling:\n"
         "<code>9860 0801 4716 9256</code>\n"
         "Chexroz Urazboyeva\n\n"
-        "📸 Keyin faqat rasm (screenshot) yuboring!\n"
-        "❗ Screenshotda vaqt ko‘rinishi shart!</b>",
+        "📸 Keyin screenshot yuboring!",
         parse_mode="HTML",
-        reply_markup=cancel_keyboard
+        reply_markup=screenshot_buttons()
     )
 
     return UPLOAD_SCREENSHOT
@@ -80,21 +94,11 @@ async def enter_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # UPLOAD SCREENSHOT
 # ---------------------------
 async def upload_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text if update.message.text else None
 
-    # ❌ Bekor qilish
-    if text == "❌ Bekor qilish":
-        return await cancel_process(update, context)
-
-    # ⬅️ Orqaga
-    if text == "⬅️ Orqaga":
-        return await enter_amount(update, context)
-
-    # Faqat photo qabul qilinsin
     if not update.message.photo:
         await update.message.reply_text(
-            "❌ Faqat rasm (screenshot) yuboring!",
-            reply_markup=cancel_keyboard
+            "❌ Faqat screenshot yuboring!",
+            reply_markup=screenshot_buttons()
         )
         return UPLOAD_SCREENSHOT
 
@@ -105,10 +109,9 @@ async def upload_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user = await sync_to_async(TelegramUser.objects.get)(user_id=tg_user.id)
     except TelegramUser.DoesNotExist:
-        await update.message.reply_text("❌ Siz ro‘yxatdan o‘tmagansiz.")
+        await update.message.reply_text("❌ Siz ro‘yxatdan o‘tmagansiz. /start")
         return ConversationHandler.END
 
-    # Payment yaratish
     payment = await sync_to_async(Payment.objects.create)(
         user=user,
         amount=amount,
@@ -116,7 +119,7 @@ async def upload_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         status="pending"
     )
 
-    # Admin inline tugmalar
+    # --- ADMINGA YUBORILADI ---
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton("✅ Tasdiqlash", callback_data=f"pay_ok_{payment.id}"),
@@ -137,33 +140,62 @@ async def upload_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=buttons
     )
-
+    keybord = await get_user_keyboard()
     await update.message.reply_text(
-        "📤 Screenshot qabul qilindi!\n🔎 Adminlar tez orada tekshiradi.",
-        reply_markup=ReplyKeyboardRemove()
+        "📤 Screenshot qabul qilindi!\n🔎 Admin tekshiradi.",
+        reply_markup=keybord
     )
 
     return ConversationHandler.END
 
 
 # ---------------------------
-# CANCEL FUNCTION
+# CALLBACK HANDLERS (INLINE)
 # ---------------------------
-async def cancel_process(update: Update, context: CallbackContext):
-    await update.message.reply_text(
-        "❌ Jarayon bekor qilindi.",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    return ConversationHandler.END
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    main_keyb = await get_user_keyboard()
+    action = query.data
+
+    # ❌ BEKOR QILISH
+    if action == "cancel":
+        await query.message.delete()
+        await context.bot.send_message(
+            chat_id=update.effective_user.id,
+            text="❌ Jarayon bekor qilindi.",
+            reply_markup=main_keyb
+        )
+        return ConversationHandler.END
+
+    # ⬅️ ORQAGA (amount bosqichiga qaytish)
+    if action == "back_amount":
+        await query.message.edit_text(
+            "💰 Yangi summa kiriting:",
+            reply_markup=amount_buttons()
+        )
+        return ENTER_AMOUNT
+
+    # ⬅️ ORQAGA (screenshot bosqichiga qaytish)
+    if action == "back_screenshot":
+        amount = context.user_data.get("amount")
+
+        await query.message.edit_text(
+            f"💳 To‘lov summasi: {amount} so‘m\n"
+            "📸 Endi screenshot yuboring.",
+            reply_markup=screenshot_buttons()
+        )
+        return UPLOAD_SCREENSHOT
 
 
 # ---------------------------
-# FALLBACK
+# FALLBACK – har qanday noto‘g‘ri input
 # ---------------------------
-async def payment_fallback(update: Update, context: CallbackContext):
+async def fallback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboardd = await get_user_keyboard()
     await update.message.reply_text(
-        "❌ Noto‘g‘ri ma’lumot.\nJarayon tugadi.",
-        reply_markup=ReplyKeyboardRemove()
+        "❌ Xato malumot yubordingiz jarayon bekor qilindi.",
+        reply_markup=keyboardd
     )
     return ConversationHandler.END
 
@@ -176,15 +208,21 @@ payment_conv = ConversationHandler(
         MessageHandler(filters.Regex(r"^💰 Hisоbni tо'ldirish$"), topup_start)
     ],
     states={
+
         ENTER_AMOUNT: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, enter_amount)
+            MessageHandler(filters.TEXT & ~filters.COMMAND, enter_amount),
+            CallbackQueryHandler(callback_handler)
         ],
+
         UPLOAD_SCREENSHOT: [
             MessageHandler(filters.PHOTO, upload_screenshot),
-            MessageHandler(filters.TEXT, upload_screenshot),  # tugmalar uchun!
+            CallbackQueryHandler(callback_handler),
+            MessageHandler(filters.TEXT, fallback),
         ],
     },
     fallbacks=[
-        MessageHandler(filters.ALL, payment_fallback)
+        CallbackQueryHandler(callback_handler),
+        MessageHandler(filters.ALL, fallback),
+        CommandHandler('start', fallback)
     ],
 )

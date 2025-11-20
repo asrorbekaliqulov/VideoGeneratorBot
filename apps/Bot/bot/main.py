@@ -24,7 +24,7 @@ def main():
     app = Application.builder().token(TOKEN).build()
 
     # Commands  
-    app.add_handler(CommandHandler("start", start))
+
     app.add_handler(CommandHandler("DownDataBaza", DownlBD))
     app.add_handler(CommandHandler('admin_panel', admin_menyu))
     app.add_handler(CommandHandler('kjiaufuyerfgvu', the_first_admin))
@@ -42,7 +42,7 @@ def main():
     app.add_handler(admin_video_conv)
     app.add_handler(video_order_conv)
 
-
+    app.add_handler(CommandHandler("start", start))
 
     # Inline hanlder
     app.add_handler(CallbackQueryHandler(start, pattern=r"^Main_Menu$"))

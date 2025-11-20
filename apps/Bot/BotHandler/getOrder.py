@@ -187,16 +187,19 @@ async def confirm_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=order_accept_button(order.id)
     )
+    keyboardd = await get_user_keyboard()
 
-    await query.message.reply_text("✅ Zakaz qabul qilindi. Jarayon boshlandi!")
+    await query.message.reply_text("✅ Zakaz qabul qilindi. Jarayon boshlandi!", reply_markup=keyboardd)
     return ConversationHandler.END
 
 
 # 🔥 Universal fallback
 async def fallback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboardd = await get_user_keyboard()
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text="❌ Xato ma’lumot kiritildi. Qaytadan boshlang: *🎞 Video yaratish*",
+        reply_markup=keyboardd,
         parse_mode="Markdown"
     )
     return ConversationHandler.END
@@ -230,6 +233,6 @@ video_order_conv = ConversationHandler(
             CallbackQueryHandler(confirm_order, pattern=r"^(confirm_yes|confirm_no|back_description)$")
         ],
     },
-    fallbacks=[MessageHandler(filters.ALL, fallback_handler),
+    fallbacks=[MessageHandler(filters.ALL ^ filters.COMMAND, fallback_handler),
                CallbackQueryHandler(cancel_order)]
 )

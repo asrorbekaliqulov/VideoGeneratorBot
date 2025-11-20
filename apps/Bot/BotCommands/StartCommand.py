@@ -81,14 +81,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 ✨ Ushbu bot mumkin bo‘lmagan narsalarni hadya qilishi mumkin…
 📷 Uning yordamida yoningda yo‘q bo‘lgan odamning tabassumini yana ko‘rishing mumkin.
-
-Biz eski fotosuratlarni jonlantiramiz — ularni ta’sirli jonli videolarga aylantiramiz, unda yaqinlar kamida bir lahzaga qaytib kelgandek bo‘ladi.
-
-🔧 Shuningdek, bot suratlarni tiklaydi va sifatini yaxshilaydi, shunda eng eski fotosuratlar ham yangi ranglarda porlaydi.
-
-💖 Bu shunchaki texnologiya emas. Bu xotiraga tegish va abadiy yo‘qolgan deb o‘ylangan his-tuyg‘ularni qaytarish imkoniyatidir.
-
-🎁 Botda bundanda ko'p funksiylar bor.
         """
         ),
         parse_mode="html",
