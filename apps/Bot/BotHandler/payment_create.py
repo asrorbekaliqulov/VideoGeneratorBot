@@ -131,13 +131,12 @@ async def upload_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=ADMIN_CHANNEL_ID,
         photo=file_id,
         caption=(
-            f"🆕 *Yangi To‘lov Tekshiruvi*\n"
+            f"🆕 Yangi To‘lov Tekshiruvi\n"
             f"👤 User: @{tg_user.username}\n"
             f"🆔 TG ID: {tg_user.id}\n"
             f"💰 Summa: {amount} so‘m\n"
             f"📝 Payment ID: {payment.id}"
         ),
-        parse_mode="Markdown",
         reply_markup=buttons
     )
     keybord = await get_user_keyboard()
