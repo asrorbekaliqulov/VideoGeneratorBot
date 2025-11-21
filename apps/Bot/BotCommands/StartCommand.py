@@ -66,7 +66,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.send_video(
             chat_id=update.effective_user.id,
-            video="https://t.me/Hobbiy_bots/3",
+            video="https://t.me/Hobbiy_bots/7",
             caption="<b>🎬 Eski fotosuratni qayta ishlash namunasi</b>",
             parse_mode="html"
         )
